@@ -1,0 +1,10 @@
+# Don't commit actual registered repos (contains local paths)
+registered_repos.txt
+
+# macOS
+.DS_Store
+
+# Editor
+*.swp
+*.swo
+*~
