@@ -2,6 +2,12 @@
 
 A WezTerm configuration for seamless remote development on a Mac Mini devbox via SSH, with git worktree management, AI coding assistant integration, and persistent sessions.
 
+## Quick Reference
+
+- **[Visual Cheatsheet](cheatsheet.html)** - Print-friendly HTML reference (open in browser)
+- **[CHEATSHEET.md](CHEATSHEET.md)** - Full markdown reference with workmux commands
+- **[tmux Cheatsheet](tmux-cheatsheet.html)** - tmux reference for devbox sessions
+
 ## Features
 
 - **Git Worktree Management**: Create, switch, and manage git worktrees with keyboard shortcuts
