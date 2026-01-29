@@ -448,9 +448,9 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 	end
 	local all_repos_cmd = table.concat(repo_cmds, " && ")
 
-	-- Also get AI sessions
+	-- Also get AI sessions with CPU usage for active/waiting detection
 	local full_cmd = all_repos_cmd
-		.. [[ && echo "---AI---" && for pid in $(pgrep -f 'claude|codex|opencode' 2>/dev/null); do cmd=$(ps -p $pid -o comm= 2>/dev/null); cwd=$(lsof -a -p $pid -d cwd 2>/dev/null | tail -1 | awk '{print $NF}'); echo "$cmd:$cwd"; done 2>/dev/null]]
+		.. [[ && echo "---AI---" && for pid in $(pgrep -f 'claude|codex|opencode' 2>/dev/null); do cmd=$(ps -p $pid -o comm= 2>/dev/null); cwd=$(lsof -a -p $pid -d cwd 2>/dev/null | tail -1 | awk '{print $NF}'); cpu=$(ps -p $pid -o %cpu= 2>/dev/null | tr -d ' '); echo "$cmd:$cwd:$cpu"; done 2>/dev/null]]
 
 	local success, stdout, stderr = wezterm.run_child_process({
 		"ssh",
@@ -463,10 +463,16 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 		local repos_output = stdout:match("(.-)%-%-%-AI%-%-%-") or stdout
 		local ai_output = stdout:match("%-%-%-AI%-%-%-(.*)") or ""
 
-		-- Parse AI sessions into a table: path -> agent type
+		-- Parse AI sessions into a table: path -> { agent_type, is_active }
 		local ai_sessions = {}
 		for line in ai_output:gmatch("[^\r\n]+") do
-			local agent, path = line:match("([^:]+):(.+)")
+			-- Format: cmd:cwd:cpu
+			local agent, path, cpu_str = line:match("([^:]+):(.+):([%d%.]+)$")
+			if not agent then
+				-- Fallback for old format
+				agent, path = line:match("([^:]+):(.+)")
+				cpu_str = "0"
+			end
 			if agent and path then
 				local agent_type = nil
 				if agent:find("claude") then
@@ -477,7 +483,11 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 					agent_type = "opencode"
 				end
 				if agent_type and path then
-					ai_sessions[path] = agent_type
+					local cpu = tonumber(cpu_str) or 0
+					ai_sessions[path] = {
+						agent_type = agent_type,
+						is_active = cpu > 2.0,
+					}
 				end
 			end
 		end
@@ -528,7 +538,8 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 
 			-- Check for AI session
 			local ai_icon = "○"
-			local is_active = false
+			local has_session = false
+			local session_is_active = false
 			local full_path = wt.wt_path
 			if full_path == "(here)" then
 				full_path = wt.repo_path
@@ -537,15 +548,22 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 			end
 			local expanded_path = full_path:gsub("^~", "/Users/joshuashin")
 
-			for session_path, agent_type in pairs(ai_sessions) do
+			for session_path, session_info in pairs(ai_sessions) do
 				if session_path:find(expanded_path, 1, true) or expanded_path:find(session_path, 1, true) then
-					is_active = true
-					if agent_type == "claude" then
-						ai_icon = "🟢"
-					elseif agent_type == "codex" then
-						ai_icon = "🟡"
-					elseif agent_type == "opencode" then
-						ai_icon = "🔵"
+					has_session = true
+					session_is_active = session_info.is_active
+					-- Active = colored circle, Waiting = 💬
+					if session_info.is_active then
+						if session_info.agent_type == "claude" then
+							ai_icon = "🟢"
+						elseif session_info.agent_type == "codex" then
+							ai_icon = "🟡"
+						elseif session_info.agent_type == "opencode" then
+							ai_icon = "🔵"
+						end
+					else
+						-- Waiting for input
+						ai_icon = "💬"
 					end
 					break
 				end
@@ -562,21 +580,28 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 			table.insert(choices, {
 				label = label,
 				id = tostring(idx),
-				is_active = is_active,
+				has_session = has_session,
+				session_is_active = session_is_active,
 				branch = wt.branch,  -- Store for recency lookup
 			})
 			worktrees_lookup[idx] = wt
 		end
 
-		-- Sort: active first, then by recency (most recent first), then alphabetically
+		-- Sort: actively working first, then sessions waiting, then by recency, then alphabetically
 		table.sort(choices, function(a, b)
-			-- Active worktrees always come first
-			if a.is_active and not b.is_active then
+			-- Actively working sessions first
+			if a.session_is_active and not b.session_is_active then
 				return true
-			elseif not a.is_active and b.is_active then
+			elseif not a.session_is_active and b.session_is_active then
 				return false
 			end
-			-- Within same active status, sort by recency
+			-- Then sessions that are waiting
+			if a.has_session and not b.has_session then
+				return true
+			elseif not a.has_session and b.has_session then
+				return false
+			end
+			-- Within same session status, sort by recency
 			local a_time = get_worktree_access_time(a.branch)
 			local b_time = get_worktree_access_time(b.branch)
 			if a_time ~= b_time then
@@ -588,7 +613,8 @@ wezterm.on("fetch-and-show-worktrees", function(window, pane)
 
 		-- Remove temporary fields (InputSelector only accepts label and id)
 		for _, choice in ipairs(choices) do
-			choice.is_active = nil
+			choice.has_session = nil
+			choice.session_is_active = nil
 			choice.branch = nil
 		end
 
@@ -972,10 +998,11 @@ local function refresh_ai_sessions()
 	wezterm.GLOBAL.ai_cache.updated = now
 
 	-- Run in background to avoid blocking
+	-- Output format: cmd:cwd:cpu (e.g., "claude:/path/to/project:15.2")
 	local success, stdout, _ = wezterm.run_child_process({
 		"ssh",
 		"devbox",
-		[[for pid in $(pgrep -f 'claude|codex|opencode' 2>/dev/null); do cmd=$(ps -p $pid -o comm= 2>/dev/null); cwd=$(lsof -a -p $pid -d cwd 2>/dev/null | tail -1 | awk '{print $NF}'); echo "$cmd:$cwd"; done 2>/dev/null]],
+		[[for pid in $(pgrep -f 'claude|codex|opencode' 2>/dev/null); do cmd=$(ps -p $pid -o comm= 2>/dev/null); cwd=$(lsof -a -p $pid -d cwd 2>/dev/null | tail -1 | awk '{print $NF}'); cpu=$(ps -p $pid -o %cpu= 2>/dev/null | tr -d ' '); echo "$cmd:$cwd:$cpu"; done 2>/dev/null]],
 	})
 
 	if success and stdout then
@@ -984,27 +1011,42 @@ local function refresh_ai_sessions()
 end
 
 -- Parse cached AI sessions into structured data (for status bar and lookups)
+-- Differentiates between active (working) and waiting (idle) sessions
 local function get_ai_sessions_structured()
 	local ai_output = wezterm.GLOBAL.ai_cache.data or ""
-	local sessions = {} -- { branch, icon, path, agent_type }
+	local sessions = {} -- { branch, icon, path, agent_type, is_active }
 	local seen = {}
 
 	for line in ai_output:gmatch("[^\r\n]+") do
-		local agent, path = line:match("([^:]+):(.+)")
+		-- Format: cmd:cwd:cpu
+		local agent, path, cpu_str = line:match("([^:]+):(.+):([%d%.]+)$")
+		if not agent then
+			-- Fallback for old format without CPU
+			agent, path = line:match("([^:]+):(.+)")
+			cpu_str = "0"
+		end
+
 		if agent and path then
 			-- Extract branch name from path
 			local branch = path:match("/%.worktrees/([^/]+)") or path:match("/([^/]+)$") or "master"
 
+			-- Determine if actively working (CPU > 2%)
+			local cpu = tonumber(cpu_str) or 0
+			local is_active = cpu > 2.0
+
 			local icon = nil
 			local agent_type = nil
 			if agent:find("claude") then
-				icon = "🟢"
+				-- 🟢 = active (working), 💬 = waiting for input
+				icon = is_active and "🟢" or "💬"
 				agent_type = "claude"
 			elseif agent:find("codex") then
-				icon = "🟡"
+				-- 🟡 = active, 💬 = waiting
+				icon = is_active and "🟡" or "💬"
 				agent_type = "codex"
 			elseif agent:find("opencode") then
-				icon = "🔵"
+				-- 🔵 = active, 💬 = waiting
+				icon = is_active and "🔵" or "💬"
 				agent_type = "opencode"
 			end
 
@@ -1016,13 +1058,19 @@ local function get_ai_sessions_structured()
 					icon = icon,
 					path = path,
 					agent_type = agent_type,
+					is_active = is_active,
 				})
 			end
 		end
 	end
 
-	-- Sort alphabetically by branch
+	-- Sort: active sessions first, then alphabetically
 	table.sort(sessions, function(a, b)
+		if a.is_active and not b.is_active then
+			return true
+		elseif not a.is_active and b.is_active then
+			return false
+		end
 		return a.branch < b.branch
 	end)
 
@@ -1050,16 +1098,27 @@ wezterm.on("update-status", function(window, pane)
 	if #sessions > 0 then
 		table.insert(left_elements, { Text = "  " })
 		for i, session in ipairs(sessions) do
-			-- Color based on agent type
-			local color = "#a6e3a1" -- default green
-			if session.agent_type == "codex" then
-				color = "#f9e2af" -- yellow
-			elseif session.agent_type == "opencode" then
-				color = "#89b4fa" -- blue
+			-- Color based on agent type and active status
+			-- Active = bright colors, Waiting = dimmer
+			local color
+			if session.is_active then
+				-- Bright colors for actively working
+				if session.agent_type == "claude" then
+					color = "#a6e3a1" -- bright green
+				elseif session.agent_type == "codex" then
+					color = "#f9e2af" -- bright yellow
+				elseif session.agent_type == "opencode" then
+					color = "#89b4fa" -- bright blue
+				else
+					color = "#a6e3a1"
+				end
+			else
+				-- Dim color for waiting/idle
+				color = "#6c7086" -- gray
 			end
 
 			-- Show number shortcut (Ctrl+1/2/3)
-			table.insert(left_elements, { Foreground = { Color = "#6c7086" } })
+			table.insert(left_elements, { Foreground = { Color = "#585b70" } })
 			table.insert(left_elements, { Text = "^" .. i .. " " })
 
 			-- Session icon and branch
