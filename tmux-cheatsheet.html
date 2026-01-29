@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devbox tmux + Workmux Cheat Sheet</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            text-align: center;
+            color: #9ca3af;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        .prefix-note {
+            background: #312e81;
+            border: 1px solid #4f46e5;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        .prefix-note kbd {
+            background: #4f46e5;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-weight: 600;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card h2 .icon {
+            font-size: 1.4rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        tr:last-child {
+            border-bottom: none;
+        }
+        td {
+            padding: 0.6rem 0;
+        }
+        td:first-child {
+            width: 45%;
+        }
+        kbd {
+            background: #374151;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+            font-size: 0.85rem;
+            border: 1px solid #4b5563;
+            white-space: nowrap;
+        }
+        .key-combo {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+        .then {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+        .action {
+            color: #d1d5db;
+        }
+        .highlight {
+            background: linear-gradient(90deg, rgba(96, 165, 250, 0.2), rgba(167, 139, 250, 0.2));
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+        .tip {
+            background: #065f46;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .tip::before {
+            content: "💡 ";
+        }
+        .warning {
+            background: #7c2d12;
+            border: 1px solid #f97316;
+        }
+        .warning::before {
+            content: "⚠️ ";
+        }
+        @media print {
+            body {
+                background: white;
+                color: black;
+                padding: 1rem;
+            }
+            .card {
+                background: #f9fafb;
+                border: 1px solid #e5e7eb;
+                break-inside: avoid;
+            }
+            kbd {
+                background: #e5e7eb;
+                border-color: #d1d5db;
+            }
+            .prefix-note {
+                background: #eef2ff;
+                border-color: #6366f1;
+            }
+        }
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Devbox tmux + Workmux Cheat Sheet</h1>
+        <p class="subtitle"><kbd>devbox</kbd> (classic) or <kbd>devbox-tabs</kbd> (native iTerm2) → 100.68.69.110</p>
+
+        <div class="prefix-note">
+            <strong>Classic mode:</strong> All shortcuts start with prefix <kbd>Ctrl+b</kbd> (press and release, then next key)<br>
+            <strong>iTerm2 tabs mode:</strong> Use native <kbd>⌘</kbd> shortcuts — no prefix needed!
+        </div>
+
+        <!-- WORKMUX QUICK START -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1)); border: 2px solid #10b981; margin-bottom: 1.5rem;">
+            <h2><span class="icon">🚀</span> Workmux Quick Start (Copy-Paste)</h2>
+            <pre style="background: #0f172a; border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem;"><code style="color: #e2e8f0;"># 1. Install OpenCode plugin (one-time)
+mkdir -p ~/.config/opencode/plugin
+curl -o ~/.config/opencode/plugin/workmux-status.ts \
+  https://raw.githubusercontent.com/raine/workmux/main/.opencode/plugin/workmux-status.ts
+
+# 2. Create/open a worktree
+<span style="color: #4ade80;">workmux add my-feature</span>       # New worktree + branch + agent
+<span style="color: #4ade80;">workmux open existing-branch</span>  # Open existing worktree
+
+# 3. Launch dashboard
+<span style="color: #4ade80;">workmux dashboard</span></code></pre>
+            <div class="tip" style="background: #064e3b;">
+                Dashboard shows nothing? Run <kbd>workmux open &lt;branch&gt;</kbd> first, then restart agent in that window.
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Windows -->
+            <div class="card highlight">
+                <h2><span class="icon">🪟</span> Windows (Tabs)</h2>
+                <table>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>c</kbd></span></td>
+                        <td class="action">Create new window</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>n</kbd></span></td>
+                        <td class="action">Next window</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>p</kbd></span></td>
+                        <td class="action">Previous window</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>0-9</kbd></span></td>
+                        <td class="action">Jump to window #</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>w</kbd></span></td>
+                        <td class="action">Visual window picker</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>,</kbd></span></td>
+                        <td class="action">Rename window</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>&</kbd></span></td>
+                        <td class="action">Close window</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Panes -->
+            <div class="card highlight">
+                <h2><span class="icon">📐</span> Panes (Splits)</h2>
+                <table>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>%</kbd></span></td>
+                        <td class="action">Split vertical (side by side)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>"</kbd></span></td>
+                        <td class="action">Split horizontal (top/bottom)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>←↑↓→</kbd></span></td>
+                        <td class="action">Move between panes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>z</kbd></span></td>
+                        <td class="action">Zoom pane (fullscreen toggle)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>x</kbd></span></td>
+                        <td class="action">Close pane</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>o</kbd></span></td>
+                        <td class="action">Cycle through panes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>space</kbd></span></td>
+                        <td class="action">Cycle pane layouts</td>
+                    </tr>
+                </table>
+                <div class="tip">
+                    <kbd>Ctrl+b</kbd> + <kbd>z</kbd> is super useful! Zoom a pane to full screen, do work, press again to unzoom.
+                </div>
+            </div>
+
+            <!-- Resizing -->
+            <div class="card">
+                <h2><span class="icon">↔️</span> Resize Panes</h2>
+                <table>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">hold</span> <kbd>←↑↓→</kbd></span></td>
+                        <td class="action">Resize in direction</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>:</kbd></span></td>
+                        <td class="action">Command mode</td>
+                    </tr>
+                </table>
+                <div class="tip">
+                    In command mode, type:<br>
+                    <kbd>resize-pane -L 10</kbd> (left 10 cells)<br>
+                    <kbd>resize-pane -R 10</kbd> (right 10 cells)
+                </div>
+            </div>
+
+            <!-- Sessions -->
+            <div class="card">
+                <h2><span class="icon">📦</span> Sessions</h2>
+                <table>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>d</kbd></span></td>
+                        <td class="action">Detach (exit, keep running)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>s</kbd></span></td>
+                        <td class="action">Session picker</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>$</kbd></span></td>
+                        <td class="action">Rename session</td>
+                    </tr>
+                </table>
+                <div class="tip">
+                    Sessions survive disconnects! Just <kbd>ssh devbox</kbd> again and run <kbd>tmux attach</kbd>.
+                </div>
+            </div>
+
+            <!-- Copy Mode -->
+            <div class="card">
+                <h2><span class="icon">📋</span> Copy Mode (Scrolling)</h2>
+                <table>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>[</kbd></span></td>
+                        <td class="action">Enter copy mode</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>q</kbd></td>
+                        <td class="action">Exit copy mode</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>↑↓</kbd> or <kbd>PgUp/PgDn</kbd></td>
+                        <td class="action">Scroll</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Space</kbd></td>
+                        <td class="action">Start selection</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Enter</kbd></td>
+                        <td class="action">Copy selection</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>]</kbd></span></td>
+                        <td class="action">Paste</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Terminal Commands -->
+            <div class="card">
+                <h2><span class="icon">💻</span> Terminal Commands</h2>
+                <table>
+                    <tr>
+                        <td><kbd>tmux</kbd></td>
+                        <td class="action">Start new session</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>tmux new -s name</kbd></td>
+                        <td class="action">New named session</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>tmux ls</kbd></td>
+                        <td class="action">List sessions</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>tmux attach</kbd></td>
+                        <td class="action">Attach to last session</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>tmux attach -t name</kbd></td>
+                        <td class="action">Attach to named session</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>tmux kill-session -t name</kbd></td>
+                        <td class="action">Kill a session</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- iTerm2 Integration -->
+            <div class="card highlight">
+                <h2><span class="icon">🍎</span> iTerm2 Native Tabs Mode</h2>
+                <p style="color: #9ca3af; margin-bottom: 0.8rem; font-size: 0.9rem;">
+                    Use <kbd>devbox-tabs</kbd> to get native macOS tabs instead of tmux prefix shortcuts!
+                </p>
+                <table>
+                    <tr>
+                        <td><kbd>⌘+1</kbd> / <kbd>⌘+2</kbd> / <kbd>⌘+3</kbd></td>
+                        <td class="action">Switch to window 1/2/3</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>⌘+T</kbd></td>
+                        <td class="action">New tmux window</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>⌘+W</kbd></td>
+                        <td class="action">Close tmux window</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>⌘+Shift+[</kbd> / <kbd>]</kbd></td>
+                        <td class="action">Previous/next window</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>⌘+D</kbd></td>
+                        <td class="action">Split pane vertically</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>⌘+Shift+D</kbd></td>
+                        <td class="action">Split pane horizontally</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>⌘+[</kbd> / <kbd>]</kbd></td>
+                        <td class="action">Switch between panes</td>
+                    </tr>
+                </table>
+                <div class="tip">
+                    Close iTerm window → choose <strong>"Bury"</strong> to detach safely. Session stays alive on devbox!
+                </div>
+            </div>
+
+            <!-- Workmux Dashboard -->
+            <div class="card highlight" style="border-color: #10b981;">
+                <h2><span class="icon">🤖</span> Workmux Dashboard</h2>
+                <table>
+                    <tr>
+                        <td><kbd>j</kbd> / <kbd>k</kbd></td>
+                        <td class="action">Navigate up/down</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>1</kbd>-<kbd>9</kbd></td>
+                        <td class="action">Quick jump to agent</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Enter</kbd></td>
+                        <td class="action">Switch to agent</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>p</kbd></td>
+                        <td class="action">Peek (dashboard stays)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>d</kbd></td>
+                        <td class="action">Open diff view</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>s</kbd></td>
+                        <td class="action">Cycle sort mode</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>i</kbd></td>
+                        <td class="action">Input mode (type to agent)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>Ctrl+u</kbd> / <kbd>Ctrl+d</kbd></td>
+                        <td class="action">Scroll preview</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Workmux Diff View -->
+            <div class="card" style="border-color: #10b981;">
+                <h2><span class="icon">📝</span> Workmux Diff View</h2>
+                <table>
+                    <tr>
+                        <td><kbd>Tab</kbd></td>
+                        <td class="action">Toggle WIP ↔ Review mode</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>a</kbd></td>
+                        <td class="action">Enter patch mode</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>c</kbd></td>
+                        <td class="action">Send commit cmd to agent</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>m</kbd></td>
+                        <td class="action">Merge and exit</td>
+                    </tr>
+                </table>
+                <div class="tip" style="background: #064e3b;">
+                    <strong>Patch mode:</strong> <kbd>y</kbd> stage hunk, <kbd>n</kbd> skip, <kbd>s</kbd> split, <kbd>o</kbd> comment to agent
+                </div>
+            </div>
+
+            <!-- Workmux Commands -->
+            <div class="card" style="border-color: #10b981;">
+                <h2><span class="icon">⚙️</span> Workmux Commands</h2>
+                <table>
+                    <tr>
+                        <td><kbd>workmux add &lt;branch&gt;</kbd></td>
+                        <td class="action">Create worktree + window</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux open &lt;branch&gt;</kbd></td>
+                        <td class="action">Open existing worktree</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux close &lt;branch&gt;</kbd></td>
+                        <td class="action">Close window (keep worktree)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux merge &lt;branch&gt;</kbd></td>
+                        <td class="action">Merge + cleanup</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux rm &lt;branch&gt;</kbd></td>
+                        <td class="action">Remove without merge</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux list</kbd></td>
+                        <td class="action">List all worktrees</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux dashboard</kbd></td>
+                        <td class="action">Open TUI dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>workmux dashboard -d</kbd></td>
+                        <td class="action">Open directly to diff</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Workmux Status Icons -->
+            <div class="card" style="border-color: #10b981;">
+                <h2><span class="icon">📊</span> Workmux Status Icons</h2>
+                <table>
+                    <tr>
+                        <td>🤖</td>
+                        <td class="action">Agent working</td>
+                    </tr>
+                    <tr>
+                        <td>💬</td>
+                        <td class="action">Waiting for input</td>
+                    </tr>
+                    <tr>
+                        <td>✅</td>
+                        <td class="action">Agent finished</td>
+                    </tr>
+                    <tr>
+                        <td><span style="color: #6b7280;">stale</span></td>
+                        <td class="action">No recent updates</td>
+                    </tr>
+                </table>
+                <div class="tip" style="background: #064e3b;">
+                    <strong>Git column:</strong> Shows <span style="color: #6b7280;">branch changes</span> (dim) + <span style="color: #4ade80;">uncommitted</span> (bright)
+                </div>
+            </div>
+
+            <!-- Your Custom Aliases -->
+            <div class="card">
+                <h2><span class="icon">⚡</span> Your Devbox Aliases</h2>
+                <table>
+                    <tr>
+                        <td><kbd>devbox</kbd></td>
+                        <td class="action">Connect with classic tmux (prefix shortcuts)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>devbox-tabs</kbd></td>
+                        <td class="action">Connect with native iTerm2 tabs (⌘ shortcuts)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd>wm</kbd></td>
+                        <td class="action">workmux (custom session manager)</td>
+                    </tr>
+                </table>
+                <div class="tip">
+                    <strong>Recommended:</strong> Use <kbd>devbox-tabs</kbd> for the best experience with native macOS window management!
+                </div>
+            </div>
+
+            <!-- Quick Reference -->
+            <div class="card highlight">
+                <h2><span class="icon">🚀</span> Most Used (80/20)</h2>
+                <table>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>c</kbd></span></td>
+                        <td class="action">New window</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>n</kbd>/<kbd>p</kbd></span></td>
+                        <td class="action">Switch windows</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>%</kbd></span></td>
+                        <td class="action">Split side-by-side</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>arrows</kbd></span></td>
+                        <td class="action">Move between panes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>z</kbd></span></td>
+                        <td class="action">Zoom/unzoom pane</td>
+                    </tr>
+                    <tr>
+                        <td><span class="key-combo"><kbd>Ctrl+b</kbd> <span class="then">→</span> <kbd>d</kbd></span></td>
+                        <td class="action">Detach</td>
+                    </tr>
+                </table>
+                <div class="tip warning">
+                    Remember: Press <kbd>Ctrl+b</kbd>, <strong>release</strong>, then press the next key!
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Generated for devbox (100.68.69.110) • tmux 3.6a + iTerm2 + Workmux • Print this page for a PDF
+        </footer>
+    </div>
+</body>
+</html>

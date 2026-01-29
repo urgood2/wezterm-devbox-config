@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wezterm + Workmux Cheatsheet</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #58a6ff;
+            font-weight: 600;
+        }
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        /* Hero Section - How It Works */
+        .hero {
+            background: linear-gradient(135deg, #161b22 0%, #21262d 100%);
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .hero-title {
+            color: #58a6ff;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+        .workflow-step {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .step-num {
+            background: #238636;
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+        }
+        .step-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .step-keys {
+            display: flex;
+            gap: 0.3rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+        .step-desc {
+            color: #8b949e;
+            font-size: 0.8rem;
+        }
+        .key {
+            background: #30363d;
+            border: 1px solid #484f58;
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        /* Concept Section */
+        .concept {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .concept-title {
+            color: #a371f7;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .concept-item {
+            background: #0d1117;
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        .concept-item h4 {
+            color: #58a6ff;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .concept-item p {
+            color: #8b949e;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        /* Commands Section */
+        .commands {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .commands-title {
+            color: #f0883e;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .command-row {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            gap: 1rem;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #21262d;
+            align-items: center;
+        }
+        .command-row:last-child {
+            border-bottom: none;
+        }
+        .command-name {
+            color: #7ee787;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .command-code {
+            background: #0d1117;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* Shortcuts Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.2rem;
+        }
+        .card h2 {
+            color: #58a6ff;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        tr {
+            border-bottom: 1px solid #21262d;
+        }
+        tr:last-child {
+            border-bottom: none;
+        }
+        td {
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+        }
+        td:first-child {
+            width: 55%;
+        }
+        .keys {
+            display: flex;
+            gap: 0.2rem;
+        }
+        .k {
+            background: #30363d;
+            border: 1px solid #484f58;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #f0f6fc;
+        }
+        .action {
+            color: #8b949e;
+        }
+        .tip {
+            background: #1f2a1f;
+            border: 1px solid #238636;
+            border-radius: 6px;
+            padding: 0.6rem;
+            margin-top: 0.8rem;
+            font-size: 0.8rem;
+            color: #7ee787;
+        }
+        .warn {
+            background: #2a1f1f;
+            border-color: #f85149;
+            color: #f0883e;
+        }
+
+        /* Status Indicators */
+        .status-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .status-title {
+            color: #7ee787;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: #0d1117;
+            padding: 0.8rem;
+            border-radius: 6px;
+        }
+        .status-icon {
+            font-size: 1.2rem;
+        }
+        .status-label {
+            color: #c9d1d9;
+            font-size: 0.85rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: #484f58;
+            font-size: 0.8rem;
+        }
+
+        @media print {
+            body { background: #fff; color: #000; padding: 1rem; }
+            .container { max-width: 100%; }
+            .card, .hero, .commands, .concept, .status-section { background: #f6f8fa; border-color: #d0d7de; }
+            .key, .k { background: #eaeef2; border-color: #d0d7de; color: #000; }
+            .workflow-step, .concept-item, .status-item, .command-code { background: #fff; }
+        }
+
+        @media (max-width: 900px) {
+            .workflow-grid, .concept-grid { grid-template-columns: 1fr; }
+            .status-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WEZTERM + WORKMUX</h1>
+        <p class="subtitle">Workspace-based worktree management for devbox</p>
+
+        <!-- Hero: Workflow -->
+        <div class="hero">
+            <div class="hero-title">Workflow: 2-Pane Layout Per Worktree</div>
+            <div class="workflow-grid">
+                <div class="workflow-step">
+                    <div class="step-num">1</div>
+                    <div class="step-title">Pick Worktree</div>
+                    <div class="step-keys">
+                        <span class="key">&#8984;</span>
+                        <span class="key">&#8679;</span>
+                        <span class="key">W</span>
+                    </div>
+                    <div class="step-desc">Opens picker with AI status. Auto-spawns lazygit.</div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-num">2</div>
+                    <div class="step-title">Work + Git</div>
+                    <div class="step-keys">
+                        <span class="key" style="font-size: 0.8rem; padding: 0.3rem 0.5rem;">Terminal</span>
+                        <span style="color: #8b949e;">+</span>
+                        <span class="key" style="font-size: 0.8rem; padding: 0.3rem 0.5rem;">Lazygit</span>
+                    </div>
+                    <div class="step-desc">70% main terminal, 30% lazygit on right</div>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-num">3</div>
+                    <div class="step-title">Launch AI</div>
+                    <div class="step-keys">
+                        <span class="key">&#8984;</span>
+                        <span class="key">&#8679;</span>
+                        <span class="key">C</span>
+                    </div>
+                    <div class="step-desc">Claude/Codex opens in new tab</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Concept: How It Works -->
+        <div class="concept">
+            <div class="concept-title">How It Works</div>
+            <div class="concept-grid">
+                <div class="concept-item">
+                    <h4>2-Pane Layout</h4>
+                    <p>Every workspace starts with terminal (70%) + lazygit (30%). Lazygit auto-spawns on startup and when switching worktrees.</p>
+                </div>
+                <div class="concept-item">
+                    <h4>Workspaces</h4>
+                    <p>Each worktree gets its own workspace. Switch with &#8984;&#8679;[ and &#8984;&#8679;]. Tabs and panes persist per workspace.</p>
+                </div>
+                <div class="concept-item">
+                    <h4>AI Sessions</h4>
+                    <p>Picker shows AI status: &#x1F7E2; Claude, &#x1F7E1; Codex, &#x1F535; OpenCode. Uses lsof to detect working directory.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Status Indicators -->
+        <div class="status-section">
+            <div class="status-title">AI Status (Always Visible in Status Bar)</div>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-icon">&#x1F7E2;</span>
+                    <span class="status-label">Claude running</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">&#x1F7E1;</span>
+                    <span class="status-label">Codex running</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">&#x1F535;</span>
+                    <span class="status-label">OpenCode running</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-icon">&#x25CB;</span>
+                    <span class="status-label">No AI session</span>
+                </div>
+            </div>
+            <div class="tip" style="margin-top: 1rem;">
+                <strong>Left status bar</strong> shows all active AI sessions across worktrees (updates every 10s).<br>
+                Example: <code style="background: #0d1117; padding: 0.2rem 0.4rem; border-radius: 4px;">&#x1F7E2; master │ &#x1F7E1; feature-x</code>
+            </div>
+        </div>
+
+        <!-- Terminal Commands -->
+        <div class="commands">
+            <div class="commands-title">Terminal Commands (shell aliases)</div>
+            <div class="command-row">
+                <div class="command-name">cc</div>
+                <div class="command-code">claude --dangerously-skip-permissions</div>
+            </div>
+            <div class="command-row">
+                <div class="command-name">cx</div>
+                <div class="command-code">codex --ask-for-approval never --sandbox danger-full-access -c model_reasoning_effort="high" -c model_reasoning_summary="detailed"</div>
+            </div>
+            <div class="command-row">
+                <div class="command-name">wt &lt;branch&gt;</div>
+                <div class="command-code">cd to worktree path (e.g., wt inventory-grid-ui)</div>
+            </div>
+            <div class="command-row">
+                <div class="command-name">wm</div>
+                <div class="command-code">workmux (list, add, path, dashboard)</div>
+            </div>
+        </div>
+
+        <!-- Shortcuts Grid -->
+        <div class="grid">
+            <!-- Worktree Management -->
+            <div class="card">
+                <h2>&#x1F333; Worktree</h2>
+                <table>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">W</span></span></td>
+                        <td class="action"><strong>Worktree picker</strong> (with AI status)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">N</span></span></td>
+                        <td class="action">New worktree</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">O</span></span></td>
+                        <td class="action">Workmux dashboard</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">[</span></span></td>
+                        <td class="action">Previous workspace</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">]</span></span></td>
+                        <td class="action">Next workspace</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">&#8629;</span></span></td>
+                        <td class="action">Connect devbox (master)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- AI Agents -->
+            <div class="card">
+                <h2>&#x1F916; AI Agents</h2>
+                <table>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">C</span></span></td>
+                        <td class="action"><strong>Claude Code</strong> (cc)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">X</span></span></td>
+                        <td class="action"><strong>Codex</strong> (cx)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">G</span></span></td>
+                        <td class="action">Lazygit</td>
+                    </tr>
+                </table>
+                <div class="tip">All open in current worktree as new tabs</div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="card">
+                <h2>&#x1F4D1; Tabs</h2>
+                <table>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">T</span></span></td>
+                        <td class="action"><strong>New tab</strong> (in worktree)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">W</span></span></td>
+                        <td class="action">Close tab</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">E</span></span></td>
+                        <td class="action"><strong>Tab picker</strong> (clickable list)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">1-9</span></span></td>
+                        <td class="action">Go to tab #</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">T</span></span></td>
+                        <td class="action">Local terminal (escape hatch)</td>
+                    </tr>
+                </table>
+                <div class="tip">Click tab bar to switch tabs</div>
+            </div>
+
+            <!-- Panes -->
+            <div class="card">
+                <h2>&#x1F4D0; Panes</h2>
+                <table>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">D</span></span></td>
+                        <td class="action">Split horizontal</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">D</span></span></td>
+                        <td class="action">Split vertical</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">[</span></span></td>
+                        <td class="action">Previous pane</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">]</span></span></td>
+                        <td class="action">Next pane</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">Z</span></span></td>
+                        <td class="action">Zoom pane (toggle)</td>
+                    </tr>
+                </table>
+                <div class="tip">Splits open in current worktree</div>
+            </div>
+
+            <!-- Layout & Misc -->
+            <div class="card">
+                <h2>&#x2699;&#xFE0F; Layout & Misc</h2>
+                <table>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8963;</span><span class="k">&#8984;</span><span class="k">F</span></span></td>
+                        <td class="action"><strong>Toggle fullscreen</strong></td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">L</span></span></td>
+                        <td class="action">Add side panes</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">P</span></span></td>
+                        <td class="action">Command palette</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">R</span></span></td>
+                        <td class="action">Reload config</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">Ctrl</span><span class="k">b</span><span class="k">[</span></span></td>
+                        <td class="action">Copy mode (vim-style)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Quick Reference -->
+            <div class="card">
+                <h2>&#x1F680; Quick Start</h2>
+                <table>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">&#8629;</span></span></td>
+                        <td class="action">Connect to devbox</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">W</span></span></td>
+                        <td class="action">Pick worktree</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">&#8679;</span><span class="k">C</span></span></td>
+                        <td class="action">Launch Claude</td>
+                    </tr>
+                    <tr>
+                        <td><span class="keys"><span class="k">&#8984;</span><span class="k">T</span></span></td>
+                        <td class="action">New tab</td>
+                    </tr>
+                </table>
+                <div class="tip">Status bar shows current branch &#x1F33F;</div>
+            </div>
+        </div>
+
+        <!-- Mouse Actions -->
+        <div class="commands">
+            <div class="commands-title">Mouse Actions</div>
+            <div class="command-row">
+                <div class="command-name">Click tab</div>
+                <div class="command-code">Switch to that tab</div>
+            </div>
+            <div class="command-row">
+                <div class="command-name">Right-click</div>
+                <div class="command-code">Paste from clipboard</div>
+            </div>
+            <div class="command-row">
+                <div class="command-name">&#8984;+click</div>
+                <div class="command-code">Open link in browser</div>
+            </div>
+        </div>
+
+        <footer>~/.config/wezterm/wezterm.lua &bull; Print this page for PDF</footer>
+    </div>
+</body>
+</html>
