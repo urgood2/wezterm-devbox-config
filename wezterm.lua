@@ -241,13 +241,28 @@ local function resolve_worktree_path(path)
 end
 
 -- Get the current workspace's worktree path
-local function get_current_worktree_path(window)
+-- Priority: 1) stored worktree info, 2) pane's CWD (via OSC 7), 3) default project
+local function get_current_worktree_path(window, pane)
 	local workspace = window:active_workspace()
 	local info = get_worktree_info(workspace)
 	if info and info.path then
 		wezterm.log_info("Using worktree path for workspace '" .. workspace .. "': " .. info.path)
 		return info.path
 	end
+
+	-- Try to get CWD from pane (requires shell integration / OSC 7)
+	if pane then
+		local cwd_uri = pane:get_current_working_dir()
+		if cwd_uri then
+			-- cwd_uri is a URL like "file://hostname/path"
+			local cwd = cwd_uri.file_path
+			if cwd and #cwd > 0 then
+				wezterm.log_info("Using pane CWD for workspace '" .. workspace .. "': " .. cwd)
+				return cwd
+			end
+		end
+	end
+
 	-- Default to project root
 	wezterm.log_info("No worktree info for workspace '" .. workspace .. "', using default: " .. DEVBOX_PROJECT)
 	return DEVBOX_PROJECT
@@ -389,7 +404,7 @@ end)
 
 -- Event: Spawn new tab in current workspace's worktree
 wezterm.on("new-tab-in-worktree", function(window, pane)
-	local path = get_current_worktree_path(window)
+	local path = get_current_worktree_path(window, pane)
 	window:perform_action(
 		act.SpawnCommandInNewTab({
 			args = { "ssh", "-t", "devbox", "cd " .. path .. " && zsh -l" },
@@ -400,7 +415,7 @@ end)
 
 -- Event: Split pane in current workspace's worktree
 wezterm.on("split-pane-in-worktree", function(window, pane, direction)
-	local path = get_current_worktree_path(window)
+	local path = get_current_worktree_path(window, pane)
 	local split_action
 	if direction == "horizontal" then
 		split_action = act.SplitHorizontal({
@@ -856,7 +871,7 @@ end)
 
 -- Event: Open lazygit in current worktree
 wezterm.on("open-lazygit", function(window, pane)
-	local path = get_current_worktree_path(window)
+	local path = get_current_worktree_path(window, pane)
 	window:perform_action(
 		act.SpawnCommandInNewTab({
 			args = { "ssh", "-t", "devbox", "zsh -lc 'cd " .. path .. " && lazygit'" },
@@ -877,7 +892,7 @@ end
 -- Event: Open Codex in current worktree (cx)
 -- Runs inside tmux so session persists across SSH disconnections
 wezterm.on("open-codex", function(window, pane)
-	local path = get_current_worktree_path(window)
+	local path = get_current_worktree_path(window, pane)
 	local session_name = get_tmux_session_name(path, "codex")
 	local codex_cmd = 'codex -c model_reasoning_effort="high" --ask-for-approval never --sandbox danger-full-access -c model_reasoning_summary="detailed" -c model_supports_reasoning_summaries=true'
 
@@ -901,7 +916,7 @@ end)
 -- Event: Open Claude Code in current worktree (cc) with dangerous bypass
 -- Runs inside tmux so session persists across SSH disconnections
 wezterm.on("open-claude", function(window, pane)
-	local path = get_current_worktree_path(window)
+	local path = get_current_worktree_path(window, pane)
 	local session_name = get_tmux_session_name(path, "claude")
 	local claude_cmd = "claude --dangerously-skip-permissions"
 
@@ -1293,7 +1308,7 @@ config.keys = {
 		key = "l",
 		mods = "CMD|SHIFT",
 		action = wezterm.action_callback(function(window, pane)
-			local path = get_current_worktree_path(window)
+			local path = get_current_worktree_path(window, pane)
 			-- Split left for worktree list
 			pane:split({
 				direction = "Left",
